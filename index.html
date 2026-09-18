@@ -252,16 +252,24 @@ document.getElementById('chatGo').addEventListener('click',()=>{const v=chatIn.v
 chatIn.addEventListener('keydown',e=>{if(e.key==='Enter'){const v=chatIn.value.trim();if(v)askAI(v)}});
 document.querySelectorAll('[data-q]').forEach(b=>b.addEventListener('click',()=>askAI(b.dataset.q)));
 // ---------- Buscador de jugadores ----------
+async function resolveUUID(nick){
+  try{
+    const r=await fetch("https://playerdb.co/api/player/minecraft/"+encodeURIComponent(nick));
+    if(r.ok){const j=await r.json();const id=j&&j.data&&j.data.player&&j.data.player.id;if(id)return String(id).replace(/-/g,"")}
+  }catch(e){}
+  try{
+    const r=await fetch("https://api.minetools.eu/uuid/"+encodeURIComponent(nick));
+    if(r.ok){const j=await r.json();if(j&&j.id)return String(j.id).replace(/-/g,"")}
+  }catch(e){}
+  return null;
+}
 document.getElementById('pGo').addEventListener('click',async()=>{
   const nick=document.getElementById('pNick').value.trim();
   const out=document.getElementById('pOut');
   if(!/^[A-Za-z0-9_]{3,16}$/.test(nick)){out.innerHTML='<p class="muted" style="color:#fca5a5">Nick inválido: 3-16 caracteres, letras, números y guion bajo.</p>';return}
   out.innerHTML='<p class="muted">Buscando… ⏳</p>';
-  let uuid=null,names=[];
-  try{
-    const r=await fetch("https://api.mojang.com/users/profiles/minecraft/"+encodeURIComponent(nick));
-    if(r.ok){const j=await r.json();uuid=j.id}
-  }catch(e){}
+  const uuid=await resolveUUID(nick);
+  let names=[];
   if(uuid){
     try{
       const r2=await fetch("https://api.mojang.com/user/profiles/"+uuid+"/names");
